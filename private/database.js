@@ -4,88 +4,88 @@ var router =  express.Router();
 var modelUser = require('../models/users.js');
 var modelXBee = require('../models/xbee.js');
 
-//Peticiones HTTP
-//HTTP:GET---------------------
-router.get('/', function(req, res, next){
-    var message = {
-        XBee: getAllXBees(),
-        Users: getAllUsers()
-    };
-    console.log(message);
-    res.status(200).jsonp(message);
-});
-router.get('/myxbee', function(req, res, next){
-    res.status(200).jsonp(message);
-});
-router.get('/myuser', function(req, res, next){
-    res.status(200).jsonp(message);
-});
-//HTTP: PUT--------------------
-router.put('/login', function(req, res, next){//mirar de hacer tokens
-    res.status(200).jsonp(message);
-});
-//HTTP:DELETE------------------
-router.delete('/myuser', function(req, res, next){
-    res.status(200).jsonp(message);
-});
-router.delete('/myxbee', function(req, res, next){
-    res.status(200).jsonp(message);
-});
-
 //GET DATABASE----------------------
-function getAllUsers(){
+exports.getAllUsers = function(){
     console.log('GET All User');
     modelUser.find(function(err,users){
         console.log(users);
+        if(err) return err;
         return users;
     })
 };
 
-function getAllXBees (){
+exports.getAllXBees = function(){
     console.log('GET All XBee');
     modelXBee.find(function(err,xbees){
         console.log(xbees);
+        if(err) return err;
         return xbees;
     })
 };
-function getUser(username){
+exports.getUser = function(username){
     console.log('GET User');
     modelUser.find({username:username}, function(err,user){
         console.log('User: '+user);
-        return user;
+        if(err) return err;
     })
 };
-function getXbee(mac){
+exports.getXBee = function(mac){
     console.log('GET XBee');
     modelXBee.find({mac: mac}, function(err,xbee){
         console.log('XBee: '+xbee);
         return xbee;
     })
 };
+exports.SignIn = function(username, userpass){
+  if(getUser(username).userpass == userpass) return getUser(username);
+    else return {message: 'User not valid'};
+};
 
 //CREATE DATABASE----------------------
-function createUser(username,password){
+exports.createUser = function(username,password){
     if(getUser(username)) return json({message: 'Exist User'});
     else{
-        modelUser.create({username: username, userpass: password},function(err){
+        modelUser.create({username: username, userpass: password},function(err,user){
             if(err) return err;
+            return user;
         });
-        return user;
+
     }
 };
 
-function createXBee(mac, owner){
-    if(getXbee(mac)) return json({ message: 'Exist XBee'});
+exports.createXBee = function(mac, owner){
+    if(getXBee(mac)) return json({ message: 'Exist XBee'});
     else{
-        modelXBee.create({mac: mac, owner: owner},function(err){
+        modelXBee.create({mac: mac, owner: owner},function(err,xbee){
             if(err) return err;
+            return xbee;
         });
-        return xbee;
+
+    }
+};
+
+//DELETE DATABASE--------------------------
+exports.deleteUser = function (username, userpass){
+    if(getUser(username).userpass==userpass){
+        modelUser.remove({username: username}, function(err){
+            if(err) return err;
+            else return {message: 'Success!'};
+        })
+    }
+};
+exports.deleteXBee = function (username, userpass, mac){
+    if(getXBee(mac).owner==username){
+        if(getUser(username).userpass==userpass){
+            modelXBee.remove({mac: mac}, function(err){
+                if(err) return err;
+                else return {message: 'Success!'};
+            })
+        }else return {message: "You aren't owner this XBee"};
     }
 };
 
 //MODIFY DATABASE-------------------------
-function modifyUser(username, password,xbeepan){
+exports.modifyUser = function(username, password,xbeepan){
     if(password!="" && xbeepan!="") {
         modelUser.update({username: username}, {$set: {userpass: password, xbeepan: xbeepan}}, function (err, user) {
             if (err) return err;
@@ -102,15 +102,15 @@ function modifyUser(username, password,xbeepan){
             return user;
         });
     }
-}
-function modifyXBee(mac, owner,xbeenet){
+};
+exports.modifyXBee = function(mac, owner,xbeenet){
     if(owner!="" && xbeenet!="") {
         modelXBee.update({mac: mac}, {$set: {owner: owner, xbeenet: xbeenet}}, function (err, xbee) {
             if (err) return err;
             return xbee;
         });
     }else  if(owner=="" && xbeenet!="") {
-        modelXBeer.update({mac: mac}, {$pushAll: {xbeenet: xbeenet}}, function (err, xbee) {
+        modelXBee.update({mac: mac}, {$pushAll: {xbeenet: xbeenet}}, function (err, xbee) {
             if (err) return err;
             return xbee;
         });
@@ -120,9 +120,9 @@ function modifyXBee(mac, owner,xbeenet){
             return xbee;
         });
     }
-}
+};
 
-function addHistory(mac, history){
+exports.addHistory = function(mac, history){
     if(getXBee(mac).history){
         modelXBee.update({mac:mac},{$pushAll:{history:history}}, function (err,xbee){
             if(err) return err;
@@ -134,9 +134,9 @@ function addHistory(mac, history){
             return xbee;
         });
     }
-}
+};
 
-function addXBeeNet(mac, xbeenet){
+exports.addXBeeNe = function(mac, xbeenet){
     if(getXBee(mac).xbeenet){
         modelXBee.update({mac:mac},{$pushAll:{xbeenet:xbeenet}}, function (err,xbee){
             if(err) return err;
@@ -148,6 +148,6 @@ function addXBeeNet(mac, xbeenet){
             return xbee;
         });
     }
-}
+};
 
 module.exports = router;
