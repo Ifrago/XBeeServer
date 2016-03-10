@@ -1,48 +1,61 @@
 var mongoose = require('mongoose');
 var express = require('express');
-var router =  express.Router();
 var modelUser = require('../models/users.js');
 var modelXBee = require('../models/xbee.js');
 
 //GET DATABASE----------------------
-exports.getAllUsers = function(){
-    console.log('GET All User');
-    modelUser.find(function(err,users){
-        console.log(users);
-        if(err) return err;
-        return users;
-    })
-};
 
-exports.getAllXBees = function(){
+/*exports.getAllXBees = function(){
     console.log('GET All XBee');
     modelXBee.find(function(err,xbees){
         console.log(xbees);
         if(err) return err;
         return xbees;
     })
-};
-exports.getUser = function(username){
+};//
+
+/*function getUser(username){
     console.log('GET User');
     modelUser.find({username:username}, function(err,user){
-        console.log('User: '+user);
-        if(err) return err;
+        if (!err) {
+            console.log('User: '+user);
+            return user;
+        } else return err;
     })
+}*/
+
+/*exports.getUser= function (username){
+    console.log('GET User');
+    modelUser.find({username:username}, function(err,user){
+        if (!err) {
+            console.log('User: '+user);
+            return user;
+        } else return err;
+    })
+};*/
+
+
+/*exports.getXBee = function(mac){
+    return getXBee(mac);
 };
-exports.getXBee = function(mac){
+function getXBee (mac){
     console.log('GET XBee');
     modelXBee.find({mac: mac}, function(err,xbee){
-        console.log('XBee: '+xbee);
-        return xbee;
+        if(!err){
+            console.log('XBee: '+xbee);
+            return xbee;
+        }else return err;
+
     })
-};
-exports.SignIn = function(username, userpass){
+}*/
+
+/*exports.SignIn = function(username, userpass){
   if(getUser(username).userpass == userpass) return getUser(username);
     else return {message: 'User not valid'};
-};
+};*/
 
 //CREATE DATABASE----------------------
-exports.createUser = function(username,password){
+/*exports.createUser = function(username,password){
     if(getUser(username)) return json({message: 'Exist User'});
     else{
         modelUser.create({username: username, userpass: password},function(err,user){
@@ -51,7 +64,7 @@ exports.createUser = function(username,password){
         });
 
     }
-};
+};*/
 
 exports.createXBee = function(mac, owner){
     if(getXBee(mac)) return json({ message: 'Exist XBee'});
@@ -85,7 +98,7 @@ exports.deleteXBee = function (username, userpass, mac){
 };
 
 //MODIFY DATABASE-------------------------
-exports.modifyUser = function(username, password,xbeepan){
+/*exports.modifyUser = function(username, password,xbeepan){
     if(password!="" && xbeepan!="") {
         modelUser.update({username: username}, {$set: {userpass: password, xbeepan: xbeepan}}, function (err, user) {
             if (err) return err;
@@ -102,7 +115,7 @@ exports.modifyUser = function(username, password,xbeepan){
             return user;
         });
     }
-};
+};*/
 exports.modifyXBee = function(mac, owner,xbeenet){
     if(owner!="" && xbeenet!="") {
         modelXBee.update({mac: mac}, {$set: {owner: owner, xbeenet: xbeenet}}, function (err, xbee) {
@@ -149,5 +162,3 @@ exports.addXBeeNe = function(mac, xbeenet){
         });
     }
 };
-
-module.exports = router;
