@@ -75,18 +75,19 @@ router.put('/signin',function(req,res,next){//SIGNIN User
     })
 });
 //DELETE---------------------
-router.delete('/', function(req,res,next){//Dar de baja a un usuario (DELETE User)
+router.delete('/:username', function(req,res,next){//Dar de baja a un usuario (DELETE User)
     modelUser.findOne({username: req.params.username}, function (err, user) {
         if(err) res.status(500).json(err);
-        console.log("DATABASE- Username: "+user.username+" Userpass: "+ user.userpass+ " User "+ user);
-        if(req.params.username == user.username){
+        if(user==null) res.status(404).json({message:"User not found in our database"});
+        else  if(req.params.username == user.username){
+            console.log("DATABASE- Username: "+user.username+" Userpass: "+ user.userpass+ " User "+ user);
             if(req.body.userpass== user.userpass){
                 modelUser.remove({username: req.params.username}, function(err){
                     if(err) res.status(500).json(err);
                     else res.status(200).json({message: 'Success!'});
                 })
             }else res.status(401).json({message:"Userpass Wrong!"});
-        }else res.status(404).json({message:"User not found in our database"});
+        }
     })
 });
 module.exports = router;

@@ -66,7 +66,7 @@ function getXBee (mac){
     }
 };*/
 
-exports.createXBee = function(mac, owner){
+/*exports.createXBee = function(mac, owner){
     if(getXBee(mac)) return json({ message: 'Exist XBee'});
     else{
         modelXBee.create({mac: mac, owner: owner},function(err,xbee){
@@ -75,18 +75,18 @@ exports.createXBee = function(mac, owner){
         });
 
     }
-};
+};*/
 
 //DELETE DATABASE--------------------------
-exports.deleteUser = function (username, userpass){
+/*exports.deleteUser = function (username, userpass){
     if(getUser(username).userpass==userpass){
         modelUser.remove({username: username}, function(err){
             if(err) return err;
             else return {message: 'Success!'};
         })
     }
-};
-exports.deleteXBee = function (username, userpass, mac){
+};*/
+/*exports.deleteXBee = function (username, userpass, mac){
     if(getXBee(mac).owner==username){
         if(getUser(username).userpass==userpass){
             modelXBee.remove({mac: mac}, function(err){
@@ -95,7 +95,7 @@ exports.deleteXBee = function (username, userpass, mac){
             })
         }else return {message: "You aren't owner this XBee"};
     }
-};
+};*/
 
 //MODIFY DATABASE-------------------------
 /*exports.modifyUser = function(username, password,xbeepan){
@@ -135,7 +135,7 @@ exports.modifyXBee = function(mac, owner,xbeenet){
     }
 };
 
-exports.addHistory = function(mac, history){
+/*exports.addHistory = function(mac, history){
     if(getXBee(mac).history){
         modelXBee.update({mac:mac},{$pushAll:{history:history}}, function (err,xbee){
             if(err) return err;
@@ -147,9 +147,9 @@ exports.addHistory = function(mac, history){
             return xbee;
         });
     }
-};
+};*/
 
-exports.addXBeeNe = function(mac, xbeenet){
+/*exports.addXBeeNe = function(mac, xbeenet){
     if(getXBee(mac).xbeenet){
         modelXBee.update({mac:mac},{$pushAll:{xbeenet:xbeenet}}, function (err,xbee){
             if(err) return err;
@@ -161,4 +161,4 @@ exports.addXBeeNe = function(mac, xbeenet){
             return xbee;
         });
     }
-};
+};*/
