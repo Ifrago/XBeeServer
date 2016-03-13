@@ -17,6 +17,7 @@
     "fs":"*",
     "mongoose": "*",
     "crypto":"*",
-    "jwt-simple":"*"
+    "jwt-simple":"*",
+    "jsonwebtoken":"*"
   }
 }
