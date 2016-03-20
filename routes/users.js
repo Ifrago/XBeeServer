@@ -6,11 +6,15 @@ var jwt = require('jsonwebtoken');
 var fs= require('fs');
 var privKey =fs.readFileSync('private/server.key');
 var pubKey = fs.readFileSync('private/server.pub');
+var publicKey = fs.readFileSync('private/public.pem');
+var privateKey = fs.readFileSync('private/private.pem');
+var TOKEN_EXPIRATION = 2,
+    TOKEN_EXPIRATION_SEC= TOKEN_EXPIRATION * 60;
 
 
 //Peticiones HTTP REVISAR AL FINAL CUANDO TODO FUNCIONE  USAR TOKETNS
 //GET---------------------
-router.get('/all', function(req,res,next){//Get All Users
+router.get('/all', function(req,res){//Get All Users
     console.log('GET All User');
     modelUser.find(function(err,users){
         console.log(users);
@@ -18,7 +22,7 @@ router.get('/all', function(req,res,next){//Get All Users
         res.status(200).json(users);
     })
 });
-router.get('/:username', function(req,res,next){//GET User
+router.get('/:username', function(req,res){//GET User
     modelUser.findOne({username:req.params.username}, function(err,user){
         if (!err) {
             console.log('User: '+user);
@@ -29,7 +33,7 @@ router.get('/:username', function(req,res,next){//GET User
 });
 
 //POST---------------------
-router.post('/',function(req,res,next){//Register User
+router.post('/',function(req,res){//Register User
   if(req.body.username=="" || req.body.userpass=="")  res.jsonp({message:"Hay campos obligaotrios vacios"});
   else {
       modelUser.findOne({username: req.body.username}, function (err, user) {
@@ -39,7 +43,7 @@ router.post('/',function(req,res,next){//Register User
                           if (err) res.jsonp(err);
                           res.status(200).json({
                               user: user,
-                              token:jwt.sign(user.username, privKey, {algorithm: 'RS256'})
+                              token:jwt.sign(user.username, privateKey, {algorithm: 'RS256'})
                           });
                       });
                   } else return res.status(409).json({message: 'Exist User'});
@@ -49,11 +53,10 @@ router.post('/',function(req,res,next){//Register User
       );
   }
 });//Register User
-router.post('/:username', function(req,res,next) {//Modify User(userpass &/or xbeepan)
+router.post('/:username', function(req,res) {//Modify User(userpass &/or xbeepan)
     try {
-           var decoded = jwt.verify(req.body.token, pubKey);
+           var decoded = jwt.verify(req.body.token, publicKey);
             console.log(" Token decoded :" + decoded + " Username: "+req.params.username);
-            if (err) res.status(401).json(err);
             if(decoded==req.params.username){
                 if (req.body.userpass != "" && req.body.xbeepan != "") {
                     modelUser.update({username: req.params.username}, {
@@ -77,29 +80,32 @@ router.post('/:username', function(req,res,next) {//Modify User(userpass &/or xb
                     });}
             } else res.status(400).json({messageModify: "Unauthoritzed, token is old"});
     }catch(err){
-        res.status(401).json({err: err, messageModify: "Unauthoritzed, token is invalid"});
-    }});//Modify User(userpass &/or xbeepan)
+        res.status(401).json({err: err, messageModify: "Unauthoritzed"});
+    }
+});//Modify User(userpass &/or xbeepan)
 
-router.post('/signin',function(req,res,next){//SIGNIN User
+router.put('/signin',function(req,res){//SIGNIN User
     console.log("MESSAGE- Username: "+req.body.username+" Userpass: "+ req.body.userpass);
     modelUser.findOne({username: req.body.username}, function (err, user) {
         if(err) res.status(500).json(err);
         console.log("DATABASE- Username: "+user.username+" Userpass: "+ user.userpass+ " User "+ user);
         if(req.body.username == user.username){
-            if(req.body.userpass== user.userpass){
+            if (req.body.userpass != user.userpass) {
+                res.status(401).json({message: "Userpass Wrong!"});
+            } else {
                 res.status(200).json({
-                    user:user,
-                    token:jwt.sign(user.username, privKey, {algorithm: 'RS256'})
+                    user: user,
+                    token: jwt.sign(user.username, privateKey,{ agorithm: 'RS256'}, {expiresIn: TOKEN_EXPIRATION})
                 });
-            }else res.status(401).json({message:"Userpass Wrong!"});
+            }
         }else res.status(404).json({message:"User not found in our database"});
     })
 });//SIGNIN User
 
 //DELETE---------------------
-router.delete('/:username', function(req,res,next){//Dar de baja a un usuario (DELETE User)
+router.delete('/:username', function(req,res){//Dar de baja a un usuario (DELETE User)
     try{
-        var decoded = jwt.verify(req.body.token, pubKey);
+        var decoded = jwt.verify(req.body.token, publicKey);
         console.log(" Token decoded :" + decoded);
         if(decoded==req.params.username){
         modelUser.findOne({username: req.params.username}, function (err, user) {
