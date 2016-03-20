@@ -2,17 +2,17 @@ var express = require('express');
 var router = express.Router();
 var mongoose = require('mongoose');
 var modelUser = require('../models/users.js');
-var jwt = require('jsonwebtoken');
+var jwt = require('jwt-simple');
 var fs= require('fs');
-var privKey =fs.readFileSync('private/server.key');
-var pubKey = fs.readFileSync('private/server.pub');
-var publicKey = fs.readFileSync('private/public.pem');
+var moment = require('moment');
+var app= express();
 var privateKey = fs.readFileSync('private/private.pem');
-var TOKEN_EXPIRATION = 2,
+var TOKEN_EXPIRATION = 10,
     TOKEN_EXPIRATION_SEC= TOKEN_EXPIRATION * 60;
+app.set('jwtTokenSecret', privateKey);
 
 
-//Peticiones HTTP REVISAR AL FINAL CUANDO TODO FUNCIONE  USAR TOKETNS
+//Peticiones HTTP
 //GET---------------------
 router.get('/all', function(req,res){//Get All Users
     console.log('GET All User');
@@ -43,7 +43,10 @@ router.post('/',function(req,res){//Register User
                           if (err) res.jsonp(err);
                           res.status(200).json({
                               user: user,
-                              token:jwt.sign(user.username, privateKey, {algorithm: 'RS256'})
+                              token: jwt.encode({
+                                  iss:user.username,
+                                  exp: moment().add(TOKEN_EXPIRATION,'minutes').valueOf()
+                              }, app.get('jwtTokenSecret'))
                           });
                       });
                   } else return res.status(409).json({message: 'Exist User'});
@@ -55,9 +58,10 @@ router.post('/',function(req,res){//Register User
 });//Register User
 router.post('/:username', function(req,res) {//Modify User(userpass &/or xbeepan)
     try {
-           var decoded = jwt.verify(req.body.token, publicKey);
-            console.log(" Token decoded :" + decoded + " Username: "+req.params.username);
-            if(decoded==req.params.username){
+        var decoded = jwt.decode(req.body.token, app.get('jwtTokenSecret'));
+        console.log(" Token decoded :" + decoded.iss + "\n Username: "+req.params.username+ "\n Date Token: "+decoded.exp+ "\n Date Now(): "+Date.now());
+        if(decoded.exp>= Date.now()) {
+            if (decoded.iss == req.params.username) {
                 if (req.body.userpass != "" && req.body.xbeepan != "") {
                     modelUser.update({username: req.params.username}, {
                         $set: {
@@ -77,8 +81,10 @@ router.post('/:username', function(req,res) {//Modify User(userpass &/or xbeepan
                     modelUser.update({username: req.params.username}, {$set: {userpass: req.body.userpass}}, function (err, user) {
                         if (err) res.status(500).json(err);
                         res.status(200).json(user);
-                    });}
-            } else res.status(400).json({messageModify: "Unauthoritzed, token is old"});
+                    });
+                }
+            } else res.status(401).json({messageModify: "Unauthoritzed, this token isn't this session"});
+        } else res.status(401).json({messageModify: "Unauthoritzed,token is old"});
     }catch(err){
         res.status(401).json({err: err, messageModify: "Unauthoritzed"});
     }
@@ -95,7 +101,10 @@ router.put('/signin',function(req,res){//SIGNIN User
             } else {
                 res.status(200).json({
                     user: user,
-                    token: jwt.sign(user.username, privateKey,{ agorithm: 'RS256'}, {expiresIn: TOKEN_EXPIRATION})
+                    token: jwt.encode({
+                        iss:user.username,
+                        exp: moment().add(TOKEN_EXPIRATION,'minutes').valueOf()
+                    }, app.get('jwtTokenSecret'))
                 });
             }
         }else res.status(404).json({message:"User not found in our database"});
@@ -105,23 +114,25 @@ router.put('/signin',function(req,res){//SIGNIN User
 //DELETE---------------------
 router.delete('/:username', function(req,res){//Dar de baja a un usuario (DELETE User)
     try{
-        var decoded = jwt.verify(req.body.token, publicKey);
-        console.log(" Token decoded :" + decoded);
-        if(decoded==req.params.username){
-        modelUser.findOne({username: req.params.username}, function (err, user) {
-            if(err) res.status(500).json(err);
-            if(user==null) res.status(404).json({message:"User not found in our database"});
-            else  if(req.params.username == user.username){
-                console.log("DATABASE- Username: "+user.username+" Userpass: "+ user.userpass+ " User "+ user);
-                if(req.body.userpass== user.userpass){
-                    modelUser.remove({username: req.params.username}, function(err){
-                        if(err) res.status(500).json(err);
-                        else res.status(200).json({messageDelete: 'Success!'});
-                    })
-                }else res.status(401).json({messageDelete:"Userpass Wrong!"});
-            }
-        })
-        }else res.status(401).json({messageDelete:"Unauthoritzed"});
+        var decoded = jwt.decode(req.body.token, app.get('jwtTokenSecret'));
+        console.log(" Token decoded :" + decoded.iss + "\n Username: "+req.params.username+ "\n Date Token: "+decoded.exp+ "\n Date Now(): "+Date.now());
+        if(decoded.exp>=Date.now()) {
+            if (decoded.iss == req.params.username) {
+                modelUser.findOne({username: req.params.username}, function (err, user) {
+                    if (err) res.status(500).json(err);
+                    if (user == null) res.status(404).json({message: "User not found in our database"});
+                    else if (req.params.username == user.username) {
+                        console.log("DATABASE- Username: " + user.username + " Userpass: " + user.userpass + " User " + user);
+                        if (req.body.userpass == user.userpass) {
+                            modelUser.remove({username: req.params.username}, function (err) {
+                                if (err) res.status(500).json(err);
+                                else res.status(200).json({messageDelete: 'Success!'});
+                            })
+                        } else res.status(401).json({messageDelete: "Userpass Wrong!"});
+                    }
+                })
+            } else res.status(401).json({messageDelete: "Unauthoritzed, this token isn't this session"});
+        } else res.status(401).json({messageDelete: "Unauthoritzed,token is old"});
     }catch(err){
         res.status(401).json({err: err, messageDelete: "Unauthoritzed"});
     }
