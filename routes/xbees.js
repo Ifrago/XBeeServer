@@ -115,13 +115,19 @@ router.delete('/:mac', function(req,res,next){//Dar de baja XBeePAN
                 modelXBee.findOne({mac:req.params.mac}, function(err,xbee){
                     if(!err){
                         if(xbee.owner==req.body.owner){
-                            console.log("Eliminando...");
+                            console.log("Eliminando XBee NET...");
+                            modelXBee.update({mac: req.params.mac}, {$pop: {xbeenet: xbee.xbeenet}}, function(err){
+                                if(err) res.status(500).json(err);
+                                else console.log("Success!");
+                            });
+                            console.log("Eliminado XBeePAN...");
                             modelXBee.remove({mac: req.params.mac}, function(err){
                                 if(err) res.status(500).json(err);
                                 else {
-                                    console.log("Eliminado");
-                                    res.status(200).json({messageDeleteXBeePAN: 'Success!'});
+                                    console.log("Success!");
+                                    res.status(200).json({messageDeleteXBeePAN: "Success!"});
                                 }
+
                             })
                         }else res.status(401).json({messageDeleteXBeePAN:"You aren't owner this XBee"});
                     }else res.status(500).json(err);
