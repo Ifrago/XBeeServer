@@ -82,27 +82,20 @@ router.post('/:mac', function(req,res,next){//Dar de Alta un XBeeNet
 });//Dar de Alta un XBeeNet
 
 //PUT-----------------------------
-router.put('/:mac/history', function(req,res,next){//Añadir registro de historial
-    try{
-        var decoded = jwt.decode(req.body.token, app.get('jwtTokenSecret'));
-        console.log(" Token decoded :" + decoded.iss + "\n Owner: "+req.body.owner+ "\n Date Token: "+decoded.exp+ "\n Date Now(): "+Date.now());
-        if(decoded.exp>= Date.now()) {
-            if (decoded.iss == req.body.owner) {
-                modelXBee.findOne({mac:req.params.mac}, function(err,xbee){
-                        if(!err) {
-                            modelXBee.update({mac: req.params.mac}, {$addToSet: {history: req.body.history}}, function (err, xbee) {
-                                if (err) res.status(500).json(err);
-                            });
-                            modelXBee.findOne({mac: xbee.mac}, function(err,xbee){
-                                if (err) res.status(500).json(err);
-                                res.status(200).json(xbee);
-                            });
-                        }
-                        else res.status(500).json(err);
-                    })
-            } else res.status(401).json({messageAddHistory: "Unauthoritzed, this token isn't this session"});
-        } else res.status(401).json({messageAddHistory: "Unauthoritzed,token is old"});
-    }catch (err){res.status(401).json({err:err,messageAddHistory: "Unauthoritzed"});}
+router.post('/history', function(req,res,next){//Añadir registro de historial
+    modelXBee.findOne({mac:req.body.mac}, function(err,xbee){
+            if(!err) {
+                modelXBee.update({mac: req.body.mac}, {$addToSet: {history: req.body.history}}, function (err, xbee) {
+                    if (err) res.status(500).json(err);
+                });
+                modelXBee.findOne({mac: xbee.mac}, function(err,xbee){
+                    if (err) res.status(500).json(err);
+                    res.status(200).json(xbee);
+                });
+            }
+            else res.status(500).json(err);
+    })
+
 });//Añadir registro de historial
 
 //DELETE-------------------------------

@@ -31,6 +31,13 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(function(req,res, next){
+  console.log("Body request: ");
+  console.log(req.body);
+  console.log("Method request: "+req.method);
+  console.log("URL Request: "+ req.url);
+  next();
+});
 
 app.use('/', routes);
 app.use('/users', users);

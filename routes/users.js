@@ -90,6 +90,7 @@ router.post('/:username', function(req,res) {//Modify User(userpass &/or xbeepan
     }
 });//Modify User(userpass &/or xbeepan)
 
+//PUT---------------------
 router.put('/signin',function(req,res){//SIGNIN User
     console.log("MESSAGE- Username: "+req.body.username+" Userpass: "+ req.body.userpass);
     modelUser.findOne({username: req.body.username}, function (err, user) {
