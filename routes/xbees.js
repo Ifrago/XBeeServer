@@ -67,6 +67,7 @@ router.post('/:mac', function(req,res,next){//Dar de Alta un XBeeNet
            if (decoded.iss== req.body.owner) {
                modelXBee.findOne({mac:req.params.mac}, function(err,xbee){
                         if(!err){
+                            if(xbee==null) res.status(404).json({MessageDarAltaXBeeNET: "No encontrado XBeePAN"});
                             modelXBee.update({mac: req.params.mac}, {$addToSet: {xbeenet:req.body.xbeenet}}, function (err, xbee) {
                                 if (err) res.status(500).json(err);
                             });
@@ -80,11 +81,10 @@ router.post('/:mac', function(req,res,next){//Dar de Alta un XBeeNet
        } else res.status(401).json({messageAddXBeeNET: "Unauthoritzed,token is old"});
    }catch (err){res.status(401).json({err:err,messageAddXBeeNET: "Unauthoritzed"});}
 });//Dar de Alta un XBeeNet
-
-//PUT-----------------------------
 router.post('/xbeepan/history', function(req,res){//Añadir registro de historial
     modelXBee.findOne({mac:req.body.mac}, function(err,xbee){
             if(!err) {
+                if(xbee==null) res.status(404).json({MessageHistoryXBeeNET: "No encontrado XBeePAN"});
                 modelXBee.update({mac: req.body.mac}, {$addToSet: {history: req.body.history}}, function (err, xbee) {
                     if (err) res.status(500).json(err);
                 });
@@ -97,7 +97,16 @@ router.post('/xbeepan/history', function(req,res){//Añadir registro de historia
     })
 
 });//Añadir registro de historial
-
+router.post('/auth/xbeenet',function(req, res){//Autenticar XBeeNET
+    modelXBee.findOne({mac:req.body.mac}, function(err,xbee){
+        if(!err){
+            if(xbee==null) res.status(404).json({MessageAuthXBeeNet: "No encontrado XBeePAN"});
+            console.log("XBee: "+xbee);
+            if(xbee.xbeenet.indexOf(req.body.macnet)==-1)res.status(404).json({request: "access denied"});
+            else res.status(200).json({request: "access"});
+        }else res.status(500).json(err);
+    })
+});
 //DELETE-------------------------------
 router.delete('/:mac', function(req,res,next){//Dar de baja XBeePAN
     try{
@@ -107,6 +116,7 @@ router.delete('/:mac', function(req,res,next){//Dar de baja XBeePAN
             if (decoded.iss == req.body.owner) {
                 modelXBee.findOne({mac:req.params.mac}, function(err,xbee){
                     if(!err){
+                        if(xbee==null) res.status(404).json({MessageDarBajaXBeePAN: "No encontrado XBeePAN"});
                         if(xbee.owner==req.body.owner){
                             console.log("Eliminando XBee NET...");
                             modelXBee.update({mac: req.params.mac}, {$pop: {xbeenet: xbee.xbeenet}}, function(err){
@@ -137,6 +147,7 @@ router.delete('/:mac/xbeenet', function(req,res,next){//Dar de baja XBeeNET
             if (decoded.iss == req.body.owner) {
                 modelXBee.findOne({mac:req.params.mac}, function(err,xbee){
                     if(!err){
+                        if(xbee==null) res.status(404).json({MessageDarBajaXBeeNet: "No encontrado XBeePAN"});
                         if(xbee.owner==req.body.owner){
                             console.log("Eliminando...");
                             modelXBee.update({mac: req.params.mac}, {$pop: {xbeenet: req.body.xbeenet}}, function(err){
