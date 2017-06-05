@@ -5,8 +5,25 @@
  */
 
 var app = require('../app');
-var debug = require('debug')('untitled:server');
-var http = require('http');
+var debug = require('debug')('XBee:server');
+var https = require('https');
+var http= require('http');
+var fs = require('fs');
+var options = {
+
+  // The Server's SSL Key
+  key: fs.readFileSync('./certs/server/private/serverXBee.key'),
+  // The Server's Cert
+
+  cert: fs.readFileSync('./certs/server/serverXBee.crt'),
+
+  // The CA (us in this case)
+  ca: fs.readFileSync('./certs/ca/ca.crt'),
+ // Ask for the client's cert
+  requestCert: true,
+  // Don't automatically reject
+  rejectUnauthorized: false
+};
 
 
 
@@ -14,20 +31,32 @@ var http = require('http');
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+var port = normalizePort(process.env.PORT || 443);
 app.set('port', port);
 
-/**
- * Create HTTP server.
- */
+//* Create HTTP server.
 
-var server = http.createServer(app);
+/*
+var server = https.createServer(options, app, function(req, res, next){
+  if(req.client.authorized){
+    res.writeHead(200, {"Contet-Type":"application/json"});
+    res.send('{"status":"approved"}');
+  }else{
+    res.writeHead(401, {"Contet-Type":"application/json"});
+    res.send('{"status":"denied"}');
+  }
+});
+*/
+
+var server = https.createServer(options,app);
+//var server = http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.
  */
 
 server.listen(port);
+console.log('Server listening...');
 server.on('error', onError);
 server.on('listening', onListening);
 
